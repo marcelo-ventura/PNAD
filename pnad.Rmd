@@ -1,0 +1,297 @@
+---
+title: "Exemplos de códigos com a PNAD"
+author: "Marcelo Ventura"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#install.packages(c("tidyverse","nycflights12","gapminder","Lahman"))
+library("tidyverse")
+```
+
+
+
+## Descrição
+
+Exemplos de códigos com dados da PNAD de: Acesso à Internet e posse de telefone móvel celular para uso pessoal 2001(Domicílios); 2015 (Pessoas)
+
+```{r, echo = FALSE}
+#Para salvar e carregar a área de trabalho usamos:
+#save.image("~/Dropbox/Ipea/Chamada 17:2018/dadospnad.Rdata")
+#load("~/Dropbox/Ipea/Chamada 17:2018/dadospnad.Rdata")
+```
+## Interpretando o documento
+
+Os 4 primeiros caracteres são anos de referência. 
+
+Os dois seguintes são unidade da federação.
+
+Os 8 seguintes são os números de controle.
+
+Os 3 seguintes são os números de série.
+
+Por assim vai, há um dicionário para domicílios e pessoas.
+
+Carregando dados(para domicílios, considerando tipo de domicílio-posiçao 23 a 24, a situação do imóvel-posicao 30, o rendimento mensal domiciliar-posicao 147-158):
+
+```{r}
+tabelateste <- read.table("~/Onedrive/github/PNAD/dados/Acesso a Internet e posse de telefone movel celular/2001/dados/DOM2001.TXT",sep="\t") #extraindo arquivo
+tabela <- as.data.frame(cbind(substr(tabelateste$V1,1,4),substr(tabelateste$V1,5,6),
+                substr(tabelateste$V1,7,14),substr(tabelateste$V1,15,17),
+                substr(tabelateste$V1,23,23),substr(tabelateste$V1,30,30),
+                substr(tabelateste$V1,147,158)))%>%
+  `colnames<-`(c("Ano","UF","Controle","Serie", "Tipo.dom","Situacao","Renda.dom")) #montando tabela vide dicionario de variaveis para domicilios
+tabela <- tabela[complete.cases(tabela),]#removendo linhas com NA
+tabela$UF.extensa <- tabela$UF%>%
+          gsub("11","Rondonia",.)%>%gsub("12","Acre",.)%>%gsub("13","Amazonas",.)%>%
+          gsub("14","Roraima",.)%>%gsub("15","Para",.)%>%gsub("16","Amapa",.)%>%
+          gsub("17","Tocantins",.)%>%gsub("21","Maranhao",.)%>%gsub("22","Piaui",.)%>%
+          gsub("23","Ceara",.)%>%gsub("24","Rio Grande do Norte",.)%>%gsub("25","Paraiba",.)%>%
+          gsub("26","Pernambuco",.)%>%gsub("27","Alagoas",.)%>%gsub("28","Sergipe",.)%>%
+          gsub("29","Bahia",.)%>%gsub("31","Minas Gerais",.)%>%gsub("32","Espirito Santo",.)%>%
+          gsub("33","Rio de Janeiro",.)%>%gsub("35","Sao Paulo",.)%>%gsub("41","Parana",.)%>%
+          gsub("42","Santa Catarina",.)%>%gsub("43","Rio Grande do Sul",.)%>%gsub("50","Mato Grosso do Sul",.)%>%
+          gsub("51","Mato Grosso",.)%>%gsub("52","Goias",.)%>%gsub("53","Distrito Federal",.)#modificando os objetos vide o estado
+tabela$Tipo.dom%<>%
+  gsub("2","Casa",.)%>%gsub("4","Apartamento",.)%>%gsub("6","comodo",.)%>%gsub("9","Ignorado",.)%>%
+  gsub(" ", "Nao aplicavel",.)#modificando os objetos vide o tipo de domicilio
+tabela$Situacao %<>% gsub(" ", "Nao aplicavel",.)%>%gsub("1","Proprio pago",.)%>%gsub("2","Proprio pagando",.)%>%
+  gsub("3","Alugado",.)%>%gsub("4","Cedido por empregador",.)%>%
+  gsub("5","Cedido de outra forma",.)%>%gsub("6","Outra condição",.)%>%gsub("9","Ignorado",.)#modificando os objetos vide a situação do imóvel
+tabela$Renda.dom%<>%as.character(.)%>%
+  gsub(" ","Nao aplicavel",.)%>%
+  gsub("999999999999","Ignorado",.)%>%#modificando os objetos vide a situacao do imovel
+  as.numeric(.)
+```
+
+## Parte 1) O pacote ggplot2
+
+O gráfico abaixo gera uma plotagem para as mil primeiras observações, onde UF é igual ao estado em questão, e tipo de domicílio é se a entrevista foi realizada em apartamento, casa, etc.
+```{r}
+ggplot(data=tabela[1:1000,])+geom_point(mapping=aes(x=UF.extensa,y=Tipo.dom,color=Situacao))
+```
+
+Acima podemos verificar que existem 4 tipos para a amostra das primeiras mil observações retirada da base, as quais consideraram apenas o estado de Rondonia.
+
+No entanto, seria mais interessante saber em um gráfico de pontos qual a frequencia de cada tipo de moradia, ou a relação entre duas variáveis. Considerando a variável de situação do domicílio. Por exemplo, poderemos saber se ele é pago, alugado, cedido, qual a situação do pagamento...
+
+```{r}
+ggplot(data=tabela[1:1000,])+geom_point(mapping=aes(x=Tipo.dom,y=Situacao),color="green")
+```
+
+Do gráfico acima podemos inferir que obviamente, todos os tipo de residencias são alugadas ou cedidas de outra forma. Porém esses pontos não respondem as seguintes perguntas: quantas são? Muitas ou poucas?
+
+```{r}
+ggplot(data=tabela[1:1000,])+geom_bar(mapping=aes(x=Tipo.dom))
+```
+Com o gráfico acima verificamos que para a amostra das primeiras 1000 observações, a casa é predominante na base de dados. Mas e para todos os dados?
+
+```{r}
+ggplot(data=tabela)+geom_bar(mapping=aes(x=Tipo.dom))
+```
+Em 2001 a PNAD foi coletada em um número expressivo de casas. No entanto, como é a relação desse tipo de domicílio com o seu estado? Ela é própria, alugada?
+
+```{r}
+ggplot(data=tabela)+geom_bar(mapping=aes(x=Tipo.dom,fill=Situacao))
+```
+Ou seja, acima temos 3 histogramas, desenvolvidos com mais camadas por cada pergunta que quisemos responder.
+
+Agora, se quisermos ver por cada estado, qual o tipo de propriedade em cada um, e qual a situação em que ele se encontra?
+```{r}
+ggplot(data=tabela)+geom_point(mapping=aes(x=UF,y=Tipo.dom,alpha=Situacao))
+```
+
+Horrível, não? Note que o alpha acima classifica a situação com a transparência dos pontos. Aplicando shape ao invés de alpha deixaria o gráfico dessa forma:
+
+```{r}
+ggplot(data=tabela)+geom_point(mapping=aes(x=UF,y=Tipo.dom,shape=Situacao))
+```
+
+
+Ainda assim fica um gráfico pouco legível....pois o comando shape utiliza seis elementos somente. 
+```{r}
+ggplot(data=tabela,aes(x=Tipo.dom,y=Situacao,fill=UF))+geom_bar(stat="identity", position=position_dodge())
+```
+
+Uma coisa importante a se saber é que dentro do aes() vão os elementos estéticos, geralmente o objeto do eixo x, e y. Fora do aes() vao os elementos que não dependem das variáveis, como cor, tamanho do ponto, etc.
+
+```{r}
+ggplot(data=tabela[1:10000,],aes(x=Tipo.dom,y=Situacao,fill=UF))+geom_bar(stat="identity", position=position_dodge())
+```
+
+Reduzindo o número de estados até que a visualização melhora um pouco. Nesse caso caberia deixar o estado como eixo x.
+
+```{r}
+ggplot(data=tabela[1:10000,],aes(x=UF,y=Situacao,fill=Tipo.dom))+geom_bar(stat="identity", position=position_dodge())
+```
+Mudando o elemento de posicao dodge para fill, teremos:
+
+```{r}
+ggplot(data=tabela[1:10000,])+geom_bar(mapping=aes(x=UF,fill=Tipo.dom), position="fill")
+```
+
+
+O comando facet_wrap permite gerar vários gráficos, logo, podemos gerar para as 10000 primeiras amostras gráficos por estado. Vejamos:
+
+```{r}
+ggplot(data=tabela[1:10000,],aes(x=Tipo.dom,y=Situacao))+geom_bar(stat="identity", position=position_dodge())+facet_wrap(~UF.extensa,nrow=2)
+
+```
+
+Agora ficou show! Tentando fazer para todos os estados teremos:
+
+```{r}
+ggplot(data=tabela,aes(x=Tipo.dom,y=Situacao))+geom_bar(stat="identity", position=position_dodge())+facet_wrap(~UF.extensa,nrow=4)
+
+```
+
+Outro tipo de facet é o facet_grid, que separa o gráfico em combinações de duas variáveis. Por exemplo:
+
+```{r}
+ggplot(data=tabela[1:100,],aes(x=Tipo.dom,y=Situacao))+geom_point()+facet_grid(UF~.)
+
+```
+
+Agora começaremos as análises analisando a renda domiciliar.
+```{r}
+ggplot(data=tabela) + geom_point(aes(x=Tipo.dom, y=Renda.dom))
+
+```
+Só com o gráfico acima podemos perceber que a renda domiciliar é maior para apartamentos e casas, onde o valor máximo nos apartamentos ultrapassa 75000 reais para 2 entrevistas.
+
+E se colocarmos x=UF?
+
+```{r}
+ggplot(data=tabela) + geom_point(aes(x=UF, y=Renda.dom))
+
+```
+
+Considerando as regioes Norte (11-17), Nordeste(21-29), Sudeste(31-35), Sul(41-43), Centro-Oeste(50-53), vemos que 33(Rio de Janeiro), 35(Sao Paulo), 17(Tocantins), 52(Goiás) foram os estados com maiores limites de renda máxima.
+```{r}
+ggplot(data=tabela)+geom_point(mapping=aes(x=Tipo.dom,y=Renda.dom),position="jitter")
+```
+
+```{r}
+ggplot(data=tabela)+geom_point(mapping=aes(x=Tipo.dom,y=Renda.dom),position="jitter")+coord_flip()
+```
+
+
+##Parte 2) Usando o pacote dplyr
+
+filter():escolha observacoes por seus valores
+arrange():reordene as linhas
+select():pegue variaveis com seus nomes
+mutate():crie novas variaveis com funçoes para variaveis existentes
+summarize():traga varios valores para o resumo
+
+Filtrando estados diferentes
+
+filter(tabela,UF=="11")#filtrando estados de Rondonia
+filter(tabela,Renda.dom<1000)#Filtrando renda domiciliar menor que 1000 reais
+
+filter(tabela,UF=="11"&Renda.dom>1000)#Filtrando Rondonia e renda domiciliar maior que 1000
+
+filter(tabela,UF %in% c(11,31)&Renda.dom>2000) #filtrando em rondonia e em minas rendas domiciliares maiores que 2000 reais
+
+Trabalhando com missings.
+
+is.na()
+
+Exemplo, verificando se alguma observação da tabela está faltando na coluna UF.
+
+filter(tabela, is.na(UF))
+
+A resposta é não. Mas e para a coluna Renda.dom?
+
+filter(tabela, is.na(Renda.dom))
+
+Existem várias. Mas quantas?
+
+nrow(filter(tabela, is.na(Renda.dom)))
+
+2060....
+
+
+
+Baixei a pnad do ano de 2015, para domicilios e pessoas.
+```{r}
+
+tabela.PNAD2015 <- read.table("~/Onedrive/github/PNAD/dados/Acesso a Internet e posse de telefone movel celular/2001/dados/PES2015.TXT",sep="\t") #extraindo arquivo
+tabela.amostra.PNAD2015 <- as.data.frame(cbind(
+                substr(tabela.PNAD2015$V1,1,4),substr(tabela.PNAD2015$V1,5,6),
+                substr(tabela.PNAD2015$V1,7,12),substr(tabela.PNAD2015$V1,13,15),
+                substr(tabela.PNAD2015$V1,18,18),substr(tabela.PNAD2015$V1,27,29),
+                substr(tabela.PNAD2015$V1,33,33),substr(tabela.PNAD2015$V1,119,130),
+                substr(tabela.PNAD2015$V1,148,148),substr(tabela.PNAD2015$V1,737,748),
+                substr(tabela.PNAD2015$V1,703,704)))%>%
+  `colnames<-`(c("Ano","UF","Controle","Serie", "Sexo","Idade","Raça","Sabe.ler/escrever","Afaz.dom","Salario.derivado","Anos.estudo"))
+
+tabela.amostra.PNAD2015$UF.extensa <- tabela.amostra.PNAD2015$UF%>%
+          gsub("11","Rondonia",.)%>%gsub("12","Acre",.)%>%gsub("13","Amazonas",.)%>%
+          gsub("14","Roraima",.)%>%gsub("15","Para",.)%>%gsub("16","Amapa",.)%>%
+          gsub("17","Tocantins",.)%>%gsub("21","Maranhao",.)%>%gsub("22","Piaui",.)%>%
+          gsub("23","Ceara",.)%>%gsub("24","Rio Grande do Norte",.)%>%gsub("25","Paraiba",.)%>%
+          gsub("26","Pernambuco",.)%>%gsub("27","Alagoas",.)%>%gsub("28","Sergipe",.)%>%
+          gsub("29","Bahia",.)%>%gsub("31","Minas Gerais",.)%>%gsub("32","Espirito Santo",.)%>%
+          gsub("33","Rio de Janeiro",.)%>%gsub("35","Sao Paulo",.)%>%gsub("41","Parana",.)%>%
+          gsub("42","Santa Catarina",.)%>%gsub("43","Rio Grande do Sul",.)%>%gsub("50","Mato Grosso do Sul",.)%>%
+          gsub("51","Mato Grosso",.)%>%gsub("52","Goias",.)%>%gsub("53","Distrito Federal",.)#modificando os objetos vide o estado
+tabela.amostra.PNAD2015$Sexo%<>%
+  gsub("2","1",.)%>%gsub("4","0",.)%>%as.numeric(.)#1 para homem e 0 para mulher
+tabela.amostra.PNAD2015$Idade%<>%as.character(.)%>%as.numeric(.)#Transformando idade para números
+tabela.amostra.PNAD2015$Sexo.nome<-tabela.amostra.PNAD2015$Sexo%>%
+  as.character(.)%>%gsub("1","Masculino",.)%>%gsub("0","Feminino",.)#1 para homem e 0 para mulher
+tabela.amostra.PNAD2015$Raça%<>%as.character(.)%>%
+  gsub("2","Branca",.)%>%gsub("4","Negra",.)%>%
+  gsub("6","Amarela",.)%>%gsub("8","Parda",.)%>%
+  gsub("0","Indigena",.)%>%gsub("9","Sem declaração",.)#modificando os objetos vide a raça declarada pelo entrevistado
+tabela.amostra.PNAD2015$`Sabe.ler/escrever`%<>%
+  gsub("1","Sim",.)%>%gsub("3","Não",.)#Verificando a legenda para leitura e escrita.
+tabela.amostra.PNAD2015$Afaz.dom%<>%
+  gsub("2","Sim",.)%>%gsub("4","Não",.)%>%gsub(" ","Não aplicável",.)#Verificando a legenda para tarefas domésticas.
+tabela.amostra.PNAD2015$Salario.derivado%<>%
+  gsub("999999999999","Sem declaração",.)%>%
+  gsub(" ","Não aplicavel",.)%>%as.numeric(.)#Verificando a legenda para salario derivado.
+tabela.amostra.PNAD2015$Anos.estudo%<>%as.character(.)%>%as.numeric(.)
+```
+
+Também podemos ler no R as tabelas de mortalidade infantil, colhidas no site do IBGE.
+
+```{r}
+tab.mort.inf.2011 <- read.csv("~/Dropbox/Ipea/Chamada 17:2018/IDB/Indicadores de mortalidade/mortalidadeinfantil.2000.2011.csv",sep=";",header = FALSE)
+
+
+```
+
+str(tabela.amostra.PNAD2015)
+
+#Rodando logit no R
+```{r}
+logitpnad.pes.2015 <- glm(Sexo~Idade+Salario.derivado,family=binomial(link="logit"),data=tabela.amostra.PNAD2015)
+print(summary(logitpnad.pes.2015))
+```
+
+Acima vemos a relação negativa entre idade e sexo. Considerando que pessoas de sexo feminino tiveram valor atribuido a zero, um valor negativo no coeficiente indica a relação positiva para o sexo feminino (pois 0<1), então vemos que pessoas com maior idade na base tendem a ser mulheres. Isso pode ser comprovado com o seguinte código:
+```{r}
+ggplot(data=tabela.amostra.PNAD2015)+geom_bar(mapping=aes(x=Idade))+facet_wrap(~Sexo,nrow=2)
+```
+
+Notamos que após a idade 60, a contagem acima de 1000 é menor no gráfico inferior(que considera indivíduos do sexo masculino)
+
+Com os resultados também vemos que salário é um coeficiente positivo. Ou seja, a tendência é que os salários sejam maiores para os homens em relação as mulheres. Para tal, vamos verificar a distribuição dos salários e qual sexo está.
+
+```{r}
+ggplot(data=tabela.amostra.PNAD2015)+geom_histogram(mapping=aes(x=Salario.derivado,fill=Sexo.nome),na.rm = TRUE)
+```
+
+#Probit no R
+Feitas as análises anteriores, agora rodamos um Probit, considerando o mesmo modelo anterior.
+
+```{r, echo=FALSE}
+probitpnad.pes.2015 <- glm(Sexo~Idade+Salario.derivado,family=binomial(link="probit"),data=tabela.amostra.PNAD2015)
+print(summary(probitpnad.pes.2015))
+```
+O Probit corrobora os resultados do modelo Logit. Ou seja, as mulheres tendem a atingir maiores idades, portanto maiores expectativas de vida. Além disso, os salários tendem a ser menores para mulheres. O inverso vale para os homens.
+
+
