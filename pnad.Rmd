@@ -217,7 +217,7 @@ nrow(filter(tabela, is.na(Renda.dom)))
 Baixei a pnad do ano de 2015, para domicilios e pessoas.
 ```{r}
 
-tabela.PNAD2015 <- read.table("~/Onedrive/github/PNAD/dados/Acesso a Internet e posse de telefone movel celular/2001/dados/PES2015.TXT",sep="\t") #extraindo arquivo
+tabela.PNAD2015 <- read.table("~/Onedrive/github/PNAD/dados/PES2015.TXT",sep="\t") #extraindo arquivo
 tabela.amostra.PNAD2015 <- as.data.frame(cbind(
                 substr(tabela.PNAD2015$V1,1,4),substr(tabela.PNAD2015$V1,5,6),
                 substr(tabela.PNAD2015$V1,7,12),substr(tabela.PNAD2015$V1,13,15),
