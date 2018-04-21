@@ -36,7 +36,7 @@ Por assim vai, há um dicionário para domicílios e pessoas.
 Carregando dados(para domicílios, considerando tipo de domicílio-posiçao 23 a 24, a situação do imóvel-posicao 30, o rendimento mensal domiciliar-posicao 147-158):
 
 ```{r}
-tabelateste <- read.table("~/Onedrive/github/PNAD/dados/Acesso a Internet e posse de telefone movel celular/2001/dados/DOM2001.TXT",sep="\t") #extraindo arquivo
+tabelateste <- read.table("~/Onedrive/github/PNAD/dados/DOM2001.TXT",sep="\t") #extraindo arquivo
 tabela <- as.data.frame(cbind(substr(tabelateste$V1,1,4),substr(tabelateste$V1,5,6),
                 substr(tabelateste$V1,7,14),substr(tabelateste$V1,15,17),
                 substr(tabelateste$V1,23,23),substr(tabelateste$V1,30,30),
