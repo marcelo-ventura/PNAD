@@ -212,8 +212,6 @@ nrow(filter(tabela, is.na(Renda.dom)))
 
 2060....
 
-
-
 Baixei a pnad do ano de 2015, para domicilios e pessoas.
 ```{r}
 
