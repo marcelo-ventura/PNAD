@@ -259,7 +259,7 @@ tabela.amostra.PNAD2015$Anos.estudo%<>%as.character(.)%>%as.numeric(.)
 Também podemos ler no R as tabelas de mortalidade infantil, colhidas no site do IBGE.
 
 ```{r}
-tab.mort.inf.2011 <- read.csv("~/Dropbox/Ipea/Chamada 17:2018/IDB/Indicadores de mortalidade/mortalidadeinfantil.2000.2011.csv",sep=";",header = FALSE)
+tab.mort.inf.2011 <- read.csv("~/Onedrive/github/PNAD/dados/mortalidadeinfantil.2000.2011.csv",sep=";",header = FALSE)
 
 
 ```
