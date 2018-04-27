@@ -321,7 +321,7 @@ shinyApp(
                   )),
       downloadButton('downloadData', 'Download dados')),
     server = function(input, output) {
-      output$plot <- renderPlot(ggplot(data=tabela.amostra.PNAD2015)+geom_bar(mapping = aes(x=UF)))
+      output$plot <- renderPlot(ggplot(data=tabela.amostra.PNAD2015)+geom_bar(mapping = aes(x=UF))+ggtitle("Histograma de UF's"))
       output$summary <- renderPrint(summary(tabela.amostra.PNAD2015))
       output$table <- renderDataTable(tabela.amostra.PNAD2015)
       output$downloadData <- downloadHandler(
